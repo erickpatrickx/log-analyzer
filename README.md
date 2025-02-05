@@ -1,66 +1,82 @@
-# Test project
+# Access Log Parser
 
+## Description
 
-## Instructions
+**Access Log Parser** is a Spring Boot application that processes HTTP access log files, stores the data in a MySQL database, and identifies IP addresses that exceed a specified number of requests within a given time period. This is useful for detecting suspicious behavior or potential attacks.
 
-### Configurations before running app
-- Update file /src/main/resources/application.properties with correct configuration for the MySQL database 
-- create database parserwb
+## Features
 
+- Parses HTTP access log files in standard format.
+- Stores log entries in a MySQL database.
+- Identifies IP addresses exceeding a request limit within a defined time frame.
+- Logs blocked IPs with explanatory messages.
 
-### Generate```
-mvn install
-```
+## Prerequisites
 
-### Run the .jar generated in target folder. Example:
-```
-java -jar parser.jar 2017-01-01.13:00:00 hourly 100
+- Java 8 or higher installed.
+- Maven installed.
+- MySQL installed and running.
 
-Obs.
+## Initial Setup
 
+1. **Configure the Database:**
 
-The jar execution syntax has changed due to the use of spring boot that changes the behavior of MANIFEST.MF
+   - Create a MySQL database named `parserwb`:
 
+     ```sql
+     CREATE DATABASE parserwb;
+     ```
 
-```
+   - The necessary tables will be created automatically by the application. The schema is as follows:
 
-## MYSQL Schema (not needed as the app will create the schema)
+     ```sql
+     CREATE TABLE `logger` (
+       `id` int(11) NOT NULL AUTO_INCREMENT,
+       `http_code` varchar(255) DEFAULT NULL,
+       `http_from` varchar(255) DEFAULT NULL,
+       `http_method` varchar(255) DEFAULT NULL,
+       `ip` varchar(255) DEFAULT NULL,
+       `start_date` datetime DEFAULT NULL,
+       PRIMARY KEY (`id`)
+     );
 
-```sql
-CREATE TABLE `logger` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `http_code` varchar(255) DEFAULT NULL,
-  `http_from` varchar(255) DEFAULT NULL,
-  `http_method` varchar(255) DEFAULT NULL,
-  `ip` varchar(255) DEFAULT NULL,
-  `start_date` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-);
+     CREATE TABLE `blocked_ip` (
+       `id` int(11) NOT NULL AUTO_INCREMENT,
+       `ip` varchar(255) DEFAULT NULL,
+       `message` varchar(255) DEFAULT NULL,
+       PRIMARY KEY (`id`)
+     );
+     ```
 
-CREATE TABLE `blocked_ip` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `ip` varchar(255) DEFAULT NULL,
-  `message` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-);
-```
+2. **Configure the Application:**
 
-## SQL Examples
+   - Update the `src/main/resources/application.properties` file with your MySQL credentials:
 
-- Find IPs that made more than a cetain number of requests for a given time period:
+     ```
+     spring.datasource.url=jdbc:mysql://localhost:3306/parserwb
+     spring.datasource.username=YOUR_USERNAME
+     spring.datasource.password=YOUR_PASSWORD
+     ```
 
-```sql
-SELECT ip
-FROM log
-WHERE start_date >= '2017-01-01 13:00:00' AND start_date < '2017-01-01 14:00:00'
-GROUP BY ip
-HAVING COUNT(ip) > 100
-```
+## Build and Run
 
-- Find requests made by a given IP:
+1. **Build the Application:**
 
-```sql
-SELECT http_from
-FROM log
-WHERE ip = '192.168.228.188'
-```
+   - In the project's root directory, run:
+
+     ```bash
+     mvn install
+     ```
+
+   - This will generate a JAR file in the `target` folder.
+
+2. **Run the Application:**
+
+   - Navigate to the `target` directory and execute the generated JAR with the required parameters:
+
+     ```bash
+     java -jar parser.jar 2017-01-01.13:00:00 hourly 100
+     ```
+
+     **Parameters:**
+     - `2017-01-01.13:00:00`: The start date and time for
